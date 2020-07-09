@@ -5,7 +5,6 @@ import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Font;
 import java.awt.Graphics;
-import java.awt.Image;
 import java.awt.event.KeyEvent;
 import java.awt.image.BufferStrategy;
 import java.awt.image.BufferedImage;
@@ -29,7 +28,10 @@ public class Game extends Canvas implements Runnable {
 	private Thread thread;
 
 	private BufferedImage image;
-	private BufferedImage tempImage = new BufferedImage(WIDTH, HEIGHT, Image.SCALE_SMOOTH);
+	private BufferedImage level1;
+	private BufferedImage level2;
+	private BufferedImage level3;
+	private BufferedImage level4;
 
 	private Player p;
 	private Controller c;
@@ -38,25 +40,42 @@ public class Game extends Canvas implements Runnable {
 	private int enemy_count = 8;
 	private int enemy_killed = 0;
 	public static int count_score = 0;
+	private int count = 1;
 
 	public LinkedList<EntityA> ea;
 	public LinkedList<EntityB> eb;
 
+	private Menu menu;
+	private MouseInput input;
+
+	public static enum STATE {
+		GAME, MENU
+	};
+
+	public static STATE State = STATE.MENU;
+
 	public void init() {
 		try {
-			image = ImageIO.read(getClass().getResource("/scene.png"));
+			image = ImageIO.read(getClass().getResource("/background.png"));
+			level1 = ImageIO.read(getClass().getResource("/scene.png"));
+			level2 = ImageIO.read(getClass().getResource("/scene1.png"));
+			level3 = ImageIO.read(getClass().getResource("/scene2.png"));
+			level4 = ImageIO.read(getClass().getResource("/scene3.png"));
+
 		} catch (IOException e1) {
 			e1.printStackTrace();
 		}
+		menu = new Menu(this);
 		tex = new Textures(this);
-		System.out.println(tex.toString());
 		p = new Player(100, 300, tex, this);
 		c = new Controller(tex, this);
 		ea = c.getEntityA();
 		eb = c.getEntityB();
 		c.addEnemy(enemy_count);
 
+		input = new MouseInput();
 		this.addKeyListener(new KeyInput(this));
+		this.addMouseListener(input);
 	}
 
 	public int getEnemy_count() {
@@ -100,21 +119,23 @@ public class Game extends Canvas implements Runnable {
 	public void keyPressed(KeyEvent event) {
 		double pos = 0;
 		int key = event.getKeyCode();
-		if (key == KeyEvent.VK_SPACE) {
-			c.addEntity(new Bullet(p.getX(), p.getY(), tex, this));
-			running = true;
-		} else if (key == KeyEvent.VK_A) {
-			pos = p.getX();
-			p.setX(pos - 10);
-		} else if (key == KeyEvent.VK_S) {
-			pos = p.getY();
-			p.setY(pos + 10);
-		} else if (key == KeyEvent.VK_D) {
-			pos = p.getX();
-			p.setX(pos + 10);
-		} else if (key == KeyEvent.VK_W) {
-			pos = p.getY();
-			p.setY(pos - 10);
+		if (State == State.GAME) {
+			if (key == KeyEvent.VK_SPACE) {
+				c.addEntity(new Bullet(p.getX(), p.getY(), tex, this));
+				running = true;
+			} else if (key == KeyEvent.VK_A) {
+				pos = p.getX();
+				p.setX(pos - 10);
+			} else if (key == KeyEvent.VK_S) {
+				pos = p.getY();
+				p.setY(pos + 10);
+			} else if (key == KeyEvent.VK_D) {
+				pos = p.getX();
+				p.setX(pos + 10);
+			} else if (key == KeyEvent.VK_W) {
+				pos = p.getY();
+				p.setY(pos - 10);
+			}
 		}
 
 	}
@@ -171,10 +192,11 @@ public class Game extends Canvas implements Runnable {
 	}
 
 	private void tick() {
-
-		if (c.getEntityA().size() > 0) {
-			p.tick();
-			c.tick();
+		if (State == State.GAME) {
+			if (c.getEntityA().size() > 0) {
+				p.tick();
+				c.tick();
+			}
 		}
 		if (enemy_killed >= enemy_count) {
 			enemy_count += 1;
@@ -193,17 +215,32 @@ public class Game extends Canvas implements Runnable {
 
 		Graphics g = s.getDrawGraphics();
 
-		/////////////////////////
+		if (State == State.GAME) {
+			if (count_score >= 0 && count_score < 10) {
+				g.drawImage(level1, 0, 0, getWidth(), getHeight(), null);
+			} else if (count_score >= 10 && count_score < 25) {
+				g.drawImage(level2, 0, 0, getWidth(), getHeight(), null);
+				count = 2;
+			} else if (count_score >= 25 && count_score <= 50) {
+				g.drawImage(level3, 0, 0, getWidth(), getHeight(), null);
+				count = 3;
+			} else if (count_score > 50) {
+				g.drawImage(level4, 0, 0, getWidth(), getHeight(), null);
+				count = 4;
+			}
+			p.render(g);
+			c.render(g);
+			Font font = new Font("Arial", Font.BOLD, 20);
+			g.setFont(font);
+			g.setColor(Color.WHITE);
+			g.drawString("Score : " + String.valueOf(count_score), 0, 20);
+			g.drawString("Level : " + String.valueOf(count), 0, 50);
 
-		////////////////////////
-		g.drawImage(image, 0, 0, getWidth(), getHeight(), null);
+		} else if (State == State.MENU) {
+			g.drawImage(image, 0, 0, getWidth(), getHeight(), null);
+			menu.render(g);
+		}
 
-		p.render(g);
-		c.render(g);
-		Font font = new Font("Arial", Font.BOLD, 20);
-		g.setFont(font);
-		g.setColor(Color.WHITE);
-		g.drawString("Score : " + String.valueOf(count_score), 0, 20);
 		g.dispose();
 		s.show();
 	}
