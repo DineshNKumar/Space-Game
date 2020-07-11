@@ -14,7 +14,6 @@ public class Physics {
 				return true;
 			}
 		}
-
 		return false;
 	}
 
@@ -25,7 +24,6 @@ public class Physics {
 				return true;
 			}
 		}
-
 		return false;
 	}
 

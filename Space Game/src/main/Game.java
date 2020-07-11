@@ -121,7 +121,7 @@ public class Game extends Canvas implements Runnable {
 		int key = event.getKeyCode();
 		if (State == State.GAME) {
 			if (key == KeyEvent.VK_SPACE) {
-				c.addEntity(new Bullet(p.getX(), p.getY(), tex, this));
+				c.addEntity(new Bullet(p.getX() + 18, p.getY(), tex, this));
 				running = true;
 			} else if (key == KeyEvent.VK_A) {
 				pos = p.getX();
